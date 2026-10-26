@@ -3,513 +3,495 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Web3 Explorer — Learn Blockchain by Touching It</title> 
+<title>Web3 Explorer – Learn Blockchain by Touching It</title>
 <style>
-  :root{
-    --bg:#0a0e17; --bg2:#0f1524; --card:#141c30; --card2:#1a2440;
-    --line:#263154; --txt:#e8ecf6; --dim:#8b95b3; --faint:#5a6480;
-    --green:#3ddc97; --green-dim:rgba(61,220,151,.12);
-    --purple:#8b7cf6; --purple-dim:rgba(139,124,246,.12);
-    --amber:#ffb454; --amber-dim:rgba(255,180,84,.12);
-    --red:#ff6b6b; --red-dim:rgba(255,107,107,.12);
-    --blue:#4ea1ff; --blue-dim:rgba(78,161,255,.12);
-    --mono:'SFMono-Regular',ui-monospace,Menlo,Consolas,monospace;
-    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{background:var(--bg);color:var(--txt);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:880px;margin:0 auto;padding:0 20px 80px}
-
-  /* ---------- header ---------- */
-  header{padding:36px 0 24px;border-bottom:1px solid var(--line);margin-bottom:28px}
-  .logo{display:flex;align-items:center;gap:12px;margin-bottom:10px}
-  .logo-mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--green),var(--blue));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-  h1{font-size:26px;letter-spacing:-.5px}
-  .tag{color:var(--dim);font-size:15px;max-width:560px}
-
-  /* ---------- tabs ---------- */
-  nav.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px}
-  .tab{padding:10px 18px;border-radius:999px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);font-size:14px;font-weight:600;cursor:pointer;transition:all .18s;font-family:var(--sans)}
-  .tab:hover{border-color:var(--faint);color:var(--txt)}
-  .tab.active{background:var(--green-dim);border-color:var(--green);color:var(--green)}
-  .tab .n{opacity:.55;font-weight:400;margin-right:6px;font-size:12px}
-
-  /* ---------- layout ---------- */
-  .module{display:none;animation:fadeUp .3s ease}
-  .module.on{display:block}
-  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-  .concept{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin-bottom:18px}
-  .concept h2{font-size:20px;margin-bottom:8px;letter-spacing:-.3px}
-  .concept p{color:var(--dim);font-size:15px}
-  .concept p+p{margin-top:8px}
-  .concept b{color:var(--txt);font-weight:600}
-  .try{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);font-size:13px;color:var(--faint)}
-  .try b{color:var(--amber)}
-
-  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 24px}
-  .panel h3{font-size:13px;text-transform:uppercase;letter-spacing:1.2px;color:var(--faint);margin-bottom:16px}
-
-  button.act{background:var(--green);color:#06281a;border:none;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s;font-family:var(--sans)}
-  button.act:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(61,220,151,.25)}
-  button.act:active{transform:translateY(0)}
-  button.act:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
-  button.ghost{background:transparent;color:var(--dim);border:1px solid var(--line);padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans)}
-  button.ghost:hover{color:var(--txt);border-color:var(--faint)}
-  .btnrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-
-  .note{margin-top:14px;font-size:13px;color:var(--dim);background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
-  .note b{color:var(--amber)}
-  .flash{animation:flash 1.2s ease}
-  @keyframes flash{0%{background:var(--green-dim)}100%{background:transparent}}
-
-  .mono{font-family:var(--mono);font-size:12.5px;word-break:break-all}
-  .chip{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.4px}
-  .chip.g{background:var(--green-dim);color:var(--green)}
-  .chip.p{background:var(--purple-dim);color:var(--purple)}
-  .chip.a{background:var(--amber-dim);color:var(--amber)}
-  .chip.r{background:var(--red-dim);color:var(--red)}
-  .chip.b{background:var(--blue-dim);color:var(--blue)}
-
-  /* ---------- wallet ---------- */
-  .wallet-card{background:linear-gradient(135deg,#1a2440,#0f1524);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:16px}
-  .wrow{display:flex;justify-content:space-between;gap:14px;padding:10px 0;border-bottom:1px dashed var(--line);align-items:flex-start}
-  .wrow:last-child{border-bottom:none}
-  .wlabel{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--faint);flex-shrink:0;padding-top:2px;width:110px}
-  .wval{font-family:var(--mono);font-size:13px;text-align:right;word-break:break-all}
-  .blur{filter:blur(6px);user-select:none;cursor:pointer}
-  .legend{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
-  @media(max-width:600px){.legend{grid-template-columns:1fr}}
-  .legend div{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--dim)}
-  .legend b{display:block;color:var(--txt);margin-bottom:3px;font-size:13px}
-
-  /* ---------- gas ---------- */
-  .mempool{display:flex;flex-direction:column;gap:8px;margin:14px 0}
-  .tx{display:flex;justify-content:space-between;align-items:center;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:13px;animation:fadeUp .3s ease}
-  .tx .fee{font-family:var(--mono);color:var(--amber);font-weight:600}
-  .tx.mine{border-color:var(--green);background:var(--green-dim)}
-  .tx.mine .fee{color:var(--green)}
-  .tx.included{border-color:var(--green);background:var(--green-dim);opacity:.55}
-  .tx.skipped{opacity:.35}
-  .gasctl{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-top:6px}
-  .sliderbox{flex:1;min-width:220px}
-  .sliderbox label{font-size:12px;color:var(--dim);display:block;margin-bottom:6px}
-  input[type=range]{width:100%;accent-color:var(--green)}
-  .gweiout{font-family:var(--mono);font-size:20px;color:var(--green);font-weight:700}
-
-  /* ---------- blocks ---------- */
-  .chain{display:flex;gap:12px;overflow-x:auto;padding:16px 4px 10px;min-height:190px;align-items:stretch}
-  .block{flex:0 0 215px;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px;font-size:12px;animation:fadeUp .35s ease}
-  .block .bhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-  .block .bidx{font-weight:800;font-size:15px}
-  .bfield{color:var(--faint);margin-top:6px;font-size:11px}
-  .bfield span{color:var(--dim);font-family:var(--mono);display:block;font-size:11px;word-break:break-all}
-  .block.invalid{border-color:var(--red);animation:shake .4s ease}
-  .block.invalid .bhash span{color:var(--red)}
-  @keyframes shake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-  .arrow{display:flex;align-items:center;color:var(--faint);font-size:18px;flex-shrink:0}
-  .btx{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px;display:flex;flex-direction:column;gap:4px}
-  .btx span{font-family:var(--mono);font-size:10.5px;color:var(--dim);background:var(--bg2);border-radius:6px;padding:3px 7px;cursor:pointer;transition:background .15s}
-  .btx span:hover{background:var(--amber-dim);color:var(--amber)}
-  .mine-log{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--dim);height:110px;overflow-y:auto;margin-top:14px}
-  .mine-log .ok{color:var(--green)}
-
-  /* ---------- defi ---------- */
-  .poolviz{display:flex;height:56px;border-radius:12px;overflow:hidden;border:1px solid var(--line);margin-bottom:6px}
-  .poolviz .ethside{background:linear-gradient(90deg,#627eea,#4a63c8);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;transition:width .5s ease;min-width:70px}
-  .poolviz .usdcside{background:linear-gradient(90deg,#2775ca,#1e5fa8);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;transition:width .5s ease;min-width:70px}
-  .poolstats{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);margin-bottom:18px;font-family:var(--mono)}
-  .swapbox{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:16px}
-  .swap-in{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
-  .swap-in input{flex:1;background:transparent;border:none;outline:none;color:var(--txt);font-size:22px;font-weight:700;font-family:var(--mono);min-width:0}
-  .swap-token{background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:7px;flex-shrink:0}
-  .tok-dot{width:16px;height:16px;border-radius:50%}
-  .swap-arrow{text-align:center;color:var(--faint);font-size:18px;margin:6px 0}
-  .quote{display:flex;justify-content:space-between;font-size:13px;color:var(--dim);margin-top:12px;font-family:var(--mono)}
-  .quote .warn{color:var(--red);font-weight:700}
-  .impactbar{height:8px;border-radius:99px;background:var(--bg);border:1px solid var(--line);margin-top:10px;overflow:hidden}
-  .impactbar i{display:block;height:100%;width:0;background:var(--green);transition:width .3s,background .3s}
-  .hist{margin-top:16px;display:flex;flex-direction:column;gap:6px}
-  .hist div{font-size:12px;color:var(--dim);font-family:var(--mono);background:var(--bg2);border-radius:8px;padding:7px 11px;animation:fadeUp .3s ease}
-
-  footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px;text-align:center}
+:root{--bg:#070b14;--bg2:#0c1322;--card:#111a2e;--line:#1f2b45;--txt:#e8ecf6;--dim:#93a0bd;--faint:#5a6785;--green:#3ddc97;--green-dim:rgba(61,220,151,.12);--purple:#8b7cf6;--purple-dim:rgba(139,124,246,.12);--amber:#ffb454;--amber-dim:rgba(255,180,84,.12);--red:#ff6b6b;--red-dim:rgba(255,107,107,.12);--blue:#4ea1ff;--blue-dim:rgba(78,161,255,.12);--mono:ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--txt);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px 60px}
+header{padding:36px 0 24px;border-bottom:1px solid var(--line);margin-bottom:26px}
+.logo{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.logo-mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--green),var(--blue));display:flex;align-items:center;justify-content:center;font-size:20px}
+h1{font-size:26px;letter-spacing:-.5px}
+.tag{color:var(--dim);font-size:15px;max-width:560px}
+nav.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px}
+.tab{padding:10px 18px;border-radius:999px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);font-size:14px;font-weight:600;cursor:pointer}
+.tab:hover{border-color:var(--faint)}
+.tab.active{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+.tab .n{opacity:.55;font-weight:700;margin-right:6px;font-size:12px}
+.module{display:none}
+.module.on{display:block;animation:fadeUp .35s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.concept{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin-bottom:18px}
+.concept h2{font-size:20px;margin-bottom:8px}
+.concept p{color:var(--dim);font-size:15px;margin-top:8px}
+.concept b{color:var(--txt)}
+.try{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);font-size:13px;color:var(--faint)}
+.try b{color:var(--amber)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 24px}
+.panel h3{font-size:13px;text-transform:uppercase;letter-spacing:1.2px;color:var(--faint);margin-bottom:16px}
+button.act{background:var(--green);color:#04281a;border:none;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer}
+button.act:hover{transform:translateY(-1px)}
+button.act:active{transform:translateY(0)}
+button.act:disabled{opacity:.45;cursor:not-allowed;transform:none}
+button.ghost{background:transparent;color:var(--dim);border:1px solid var(--line);padding:11px 18px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer}
+button.ghost:hover{color:var(--txt);border-color:var(--faint)}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.note{margin-top:14px;font-size:13px;color:var(--dim);background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.note b{color:var(--amber)}
+.mono{font-family:var(--mono);font-size:12.5px;word-break:break-all}
+.chip{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.4px}
+.chip.g{background:var(--green-dim);color:var(--green)}
+.chip.p{background:var(--purple-dim);color:var(--purple)}
+.chip.a{background:var(--amber-dim);color:var(--amber)}
+.chip.r{background:var(--red-dim);color:var(--red)}
+.chip.b{background:var(--blue-dim);color:var(--blue)}
+.wallet-card{background:linear-gradient(135deg,#1a2440,#0f1524);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px}
+.wrow{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line);align-items:flex-start}
+.wrow:last-child{border-bottom:none}
+.wlabel{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--faint);flex-shrink:0;padding-top:3px}
+.wal{font-family:var(--mono);font-size:13px;text-align:right;word-break:break-all}
+.blur{filter:blur(6px);user-select:none;cursor:pointer}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.legend div{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--dim)}
+.legend b{display:block;color:var(--txt);margin-bottom:3px;font-size:13px}
+.mempool{display:flex;flex-direction:column;gap:8px;margin:14px 0}
+.tx{display:flex;justify-content:space-between;align-items:center;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--faint);font-weight:600;transition:all .3s}
+.tx .fee{font-family:var(--mono);color:var(--amber);font-weight:700}
+.tx.mine{border-color:var(--green);background:var(--green-dim);color:var(--txt)}
+.tx.included{border-color:var(--green);background:var(--green-dim);opacity:.6}
+.tx.skipped{opacity:.3}
+.gasctl{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-top:6px}
+.sliderbox{flex:1;min-width:220px}
+.sliderbox label{font-size:12px;color:var(--dim);display:block;margin-bottom:6px}
+input[type=range]{width:100%;accent-color:var(--green)}
+.gweiout{font-family:var(--mono);font-size:20px;color:var(--green);font-weight:700}
+.chain{display:flex;gap:12px;overflow-x:auto;padding:16px 4px 10px;min-height:100px;align-items:stretch}
+.block{flex:0 0 215px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;font-size:12px;color:var(--dim)}
+.block .bhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.block .bidx{font-weight:800;color:var(--txt);font-size:15px}
+.bfield{color:var(--faint);margin-top:6px;font-size:11px}
+.bfield .mono{color:var(--dim)}
+.block.invalid{border-color:var(--red);animation:shake .4s ease}
+.block.invalid .bhash span{color:var(--red)}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.arrow{align-self:center;color:var(--faint);font-size:18px;flex-shrink:0}
+.btx{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px;display:flex;flex-direction:column;gap:4px}
+.btx span{font-family:var(--mono);font-size:10.5px;color:var(--dim);background:var(--bg2);border-radius:6px;padding:3px 6px;cursor:pointer}
+.btx span:hover{background:var(--amber-dim);color:var(--amber)}
+.mine-log{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--dim);height:110px;overflow-y:auto;margin-top:12px}
+.mine-log .ok{color:var(--green)}
+.poolviz{display:flex;height:56px;border-radius:12px;overflow:hidden;border:1px solid var(--line);margin-bottom:6px}
+.poolviz .ethside{background:linear-gradient(90deg,#627eea,#4a63c8);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:13px;transition:width .35s}
+.poolviz .usdcside{background:linear-gradient(90deg,#2775ca,#165fa8);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:13px;transition:width .35s}
+.poolstats{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:12px;color:var(--dim);margin-bottom:18px;font-family:var(--mono)}
+.swapbox{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.swap-in{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.swap-in input{flex:1;background:transparent;border:none;outline:none;color:var(--txt);font-size:22px;font-weight:700;font-family:var(--mono);min-width:0}
+.swap-token{display:flex;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:700;font-size:14px}
+.tok-dot{width:16px;height:16px;border-radius:50%}
+.swap-arrow{text-align:center;color:var(--faint);font-size:18px;margin:6px 0}
+.quote{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:13px;color:var(--dim);margin-top:12px;font-family:var(--mono)}
+.quote .warn{color:var(--red);font-weight:700}
+.impactbar{height:8px;border-radius:99px;background:var(--bg);border:1px solid var(--line);margin-top:10px;overflow:hidden}
+.impactbar i{display:block;height:100%;width:0;background:var(--green);transition:width .3s}
+.hist{margin-top:16px;display:flex;flex-direction:column;gap:6px}
+.hist div{font-size:12px;color:var(--dim);font-family:var(--mono);background:var(--bg2);border-radius:8px;padding:7px 10px;border:1px solid var(--line)}
+footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px;text-align:center}
 </style>
 </head>
 <body>
 <div class="wrap">
-
-  <header>
-    <div class="logo">
-      <div class="logo-mark">⛓</div>
-      <h1>Web3 Explorer</h1>
+<header>
+  <div class="logo"><div class="logo-mark">⛓️</div><h1>Web3 Explorer</h1></div>
+  <p class="tag">Don't just read about blockchain — touch it. Four interactive playgrounds that explain the core concepts behind every crypto app. No wallet, no signup, no risk.</p>
+</header>
+<nav class="tabs">
+  <button class="tab active" onclick="showTab('wallet',this)"><span class="n">01</span>What's a Wallet?</button>
+  <button class="tab" onclick="showTab('gas',this)"><span class="n">02</span>What's Gas?</button>
+  <button class="tab" onclick="showTab('blocks',this)"><span class="n">03</span>What's a Block?</button>
+  <button class="tab" onclick="showTab('defi',this)"><span class="n">04</span>What's DeFi?</button>
+</nav>
+<!-- 01 WALLET -->
+<section class="module on" id="m-wallet">
+  <div class="concept">
+    <h2>A wallet is your identity on the blockchain</h2>
+    <p>It's not an app and it's not an account at a company — it's a pair of keys. The <b>address</b> is like your email address: you share it freely so people can send you crypto. The <b>private key</b> is like your password: whoever has it controls everything at that address.</p>
+    <p>There's no "forgot password" on a blockchain. Lose your private key and the funds are gone forever. That's why the saying exists: <b>not your keys, not your coins.</b></p>
+    <p class="try"><b>Try it:</b> Generate a wallet below. The keys are created entirely in your browser — this is exactly how real wallets do it (minus a few security layers).</p>
+  </div>
+  <div class="panel">
+    <h3>Test Wallet Generator <span class="chip g">100% SAFE — EDUCATIONAL ONLY</span></h3>
+    <div class="btnrow"><button class="act" onclick="genWallet()">⚡ Generate Test Wallet</button></div>
+    <div id="walletOut"></div>
+    <div class="note" style="display:none" id="walletNote"><b>Never do this with real keys:</b> this wallet is random and worthless — that's what makes it safe to play with. Real wallets guard the key with encryption and never show it after setup.</div>
+    <div class="legend" id="walletLegend" style="display:none">
+      <div><b>🔓 Address = public</b>Think of it like an email address. Share it freely — people need it to send you tokens or check your balance on a block explorer.</div>
+      <div><b>🔐 Private key = top secret</b>Whoever holds it can spend everything. Never share it. Not with "support", not with a website, not with anyone.</div>
     </div>
-    <p class="tag">Don't just read about blockchain — touch it. Four interactive playgrounds that explain the core concepts behind every crypto app. No wallet, no signup, no risk.</p>
-  </header>
-
-  <nav class="tabs">
-    <button class="tab active" data-m="wallet"><span class="n">01</span>What's a Wallet?</button>
-    <button class="tab" data-m="gas"><span class="n">02</span>What's Gas?</button>
-    <button class="tab" data-m="blocks"><span class="n">03</span>What's a Block?</button>
-    <button class="tab" data-m="defi"><span class="n">04</span>What's DeFi?</button>
-  </nav>
-
-  <!-- ============ 01 WALLET ============ -->
-  <section class="module on" id="m-wallet">
-    <div class="concept">
-      <h2>A wallet is your identity on the blockchain</h2>
-      <p>It's not an app and it's not an account at a company — it's a pair of keys. The <b>address</b> is like your email address: you share it freely so people can send you crypto. The <b>private key</b> is like your password: whoever has it controls everything at that address.</p>
-      <p>There's no "forgot password" on a blockchain. Lose your private key and the funds are gone forever. That's why the saying exists: <b>not your keys, not your coins.</b></p>
-      <div class="try"><b>Try it:</b> Generate a wallet below. The keys are created entirely in your browser — this is exactly how real wallets do it (minus a few security layers).</div>
-    </div>
-    <div class="panel">
-      <h3>Test Wallet Generator <span class="chip g">100% safe — educational only</span></h3>
-      <div class="btnrow"><button class="act" id="genWallet">⚡ Generate Test Wallet</button></div>
-      <div id="walletOut"></div>
-      <div class="note" style="display:none" id="walletNote"><b>Never do this with real keys:</b> this wallet is randomly generated and connected to nothing. A real private key must never be shared, screenshotted, or typed into any website. Anyone asking for it is stealing from you.</div>
-      <div class="legend" id="walletLegend" style="display:none">
-        <div><b>🔓 Address = public</b>Safe to share. It's how people send you tokens and check your balance on a block explorer.</div>
-        <div><b>🔐 Private key = top secret</b>Whoever holds it can spend everything. Never share it. Not with "support", not with airdrop forms, not with anyone.</div>
+  </div>
+</section>
+<!-- 02 GAS -->
+<section class="module" id="m-gas">
+  <div class="concept">
+    <h2>Gas is the fee that buys your transaction a seat</h2>
+    <p>A blockchain can only fit a limited number of transactions in each block. When demand is high, transactions <b>compete</b> by offering a fee — measured in gwei (a tiny fraction of ETH). Higher fee → picked sooner.</p>
+    <p>Think of it like an auction for limited space. Set your fee too low and your transaction waits. Set it higher and it jumps the queue.</p>
+    <p class="try"><b>Try it:</b> Set your gas fee, send a transaction into the mempool (the waiting room), then mine a block and see if you made the cut.</p>
+  </div>
+  <div class="panel">
+    <h3>The Mempool — transactions waiting to be confirmed</h3>
+    <div class="mempool" id="mempool"></div>
+    <div class="gasctl">
+      <div class="sliderbox">
+        <label>Your gas fee: <span class="gweiout" id="gweiOut">25 gwei</span></label>
+        <input type="range" id="gweiSlider" min="1" max="120" value="25" oninput="document.getElementById('gweiOut').textContent=this.value+' gwei'">
       </div>
+      <button class="act" onclick="sendTx()">Send My Transaction</button>
+      <button class="ghost" onclick="mineBlock()">⛏ Mine Next Block</button>
     </div>
-  </section>
-
-  <!-- ============ 02 GAS ============ -->
-  <section class="module" id="m-gas">
-    <div class="concept">
-      <h2>Gas is the fee that buys your transaction a seat</h2>
-      <p>A blockchain can only fit a limited number of transactions in each block. When demand is high, transactions <b>compete</b> by offering a fee — measured in gwei (a tiny fraction of ETH). Higher fee → picked sooner.</p>
-      <p>Think of it like an auction for limited space. Set your fee too low and your transaction waits. Set it higher and it jumps the queue.</p>
-      <div class="try"><b>Try it:</b> Set your gas fee, send a transaction into the mempool (the waiting room), then mine a block and see if you made the cut.</div>
+    <div class="note" id="gasNote">The mempool above holds pending transactions from other users, each offering a fee. When a block is mined, it takes the <b>highest-paying</b> transactions first (block capacity: 5).</div>
+  </div>
+</section>
+<!-- 03 BLOCKS -->
+<section class="module" id="m-blocks">
+  <div class="concept">
+    <h2>Blocks bundle history into an unbreakable chain</h2>
+    <p>A block is a batch of transactions plus a <b>hash</b> — a unique fingerprint of everything inside it. Each block also stores the <b>hash of the block before it</b>. That's the "chain" in blockchain: every block is locked to its history.</p>
+    <p>Mining is the search for a hash that meets the network's difficulty target. Change <b>even one character</b> anywhere in the history, and every hash after it breaks — instantly exposing the tampering.</p>
+    <p class="try"><b>Try it:</b> Mine a few blocks, then click any transaction inside an old block to tamper with it. Watch what happens to the chain. Then repair it.</p>
+  </div>
+  <div class="panel">
+    <h3>The Chain <span class="chip b" id="chainStatus">VALID</span></h3>
+    <div class="chain" id="chain"></div>
+    <div class="btnrow" style="margin-top:14px">
+      <button class="act" onclick="mineChainBlock()">⛏ Mine a Block</button>
+      <button class="ghost" id="repairBtn" style="display:none" onclick="repairChain()">🔧 Repair Chain</button>
     </div>
-    <div class="panel">
-      <h3>The Mempool — transactions waiting to be confirmed</h3>
-      <div class="mempool" id="mempool"></div>
-      <div class="gasctl">
-        <div class="sliderbox">
-          <label>Your gas fee: <span class="gweiout" id="gweiOut">25 gwei</span></label>
-          <input type="range" id="gweiSlider" min="1" max="120" value="25">
-        </div>
-        <button class="act" id="sendTx">Send My Transaction</button>
-        <button class="ghost" id="mineBlockBtn">⛏ Mine Next Block</button>
+    <div class="mine-log" id="mineLog">Miner ready. Click "Mine a Block" to bundle pending transactions into a new block.</div>
+    <div class="note">Clicking a transaction inside a block simulates editing history (something no honest node would accept). Notice how the edited block <b>and every block after it</b> turn invalid — that's why blockchains are so hard to cheat.</div>
+  </div>
+</section>
+<!-- 04 DEFI -->
+<section class="module" id="m-defi">
+  <div class="concept">
+    <h2>DeFi replaces the middleman with a math pool</h2>
+    <p>A <b>liquidity pool</b> holds two tokens (here: ETH and USDC) deposited by users. Anyone can trade against the pool instantly — no bank, no exchange operator, no waiting for a buyer.</p>
+    <p>The pool follows a simple rule called the <b>constant product formula</b>: <b>x × y = k</b>. Every trade changes the ratio of tokens, which changes the price. Big trades move the price a lot — that's <b>price impact</b>, and it's why tiny pools give terrible rates.</p>
+    <p class="try"><b>Try it:</b> Swap ETH for USDC below. Start small, then try a huge amount and watch the price punish you.</p>
+  </div>
+  <div class="panel">
+    <h3>ETH / USDC Liquidity Pool</h3>
+    <div class="poolviz">
+      <div class="ethside" id="ethSide" style="width:50%">ETH</div>
+      <div class="usdcside" id="usdcSide" style="width:50%">USDC</div>
+    </div>
+    <div class="poolstats">
+      <span id="poolEth">Pool: 10.00 ETH</span>
+      <span id="poolPrice">Price: $3,000 / ETH</span>
+      <span id="poolUsdc">Pool: 30,000 USDC</span>
+    </div>
+    <div class="swapbox">
+      <div class="swap-in">
+        <input type="number" id="swapIn" placeholder="0.0" min="0" step="any" oninput="quote()">
+        <div class="swap-token"><span class="tok-dot" style="background:#627eea"></span>ETH</div>
       </div>
-      <div class="note" id="gasNote">The mempool above holds pending transactions from other users, each offering a fee. When a block is mined, it takes the <b>highest-paying</b> transactions first (block capacity: 5).</div>
-    </div>
-  </section>
-
-  <!-- ============ 03 BLOCKS ============ -->
-  <section class="module" id="m-blocks">
-    <div class="concept">
-      <h2>Blocks bundle history into an unbreakable chain</h2>
-      <p>A block is a batch of transactions plus a <b>hash</b> — a unique fingerprint of everything inside it. Each block also stores the <b>hash of the block before it</b>. That's the "chain" in blockchain: every block is locked to its history.</p>
-      <p>Mining is the search for a hash that meets the network's difficulty target. Change <b>even one character</b> anywhere in the history, and every hash after it breaks — instantly exposing the tampering.</p>
-      <div class="try"><b>Try it:</b> Mine a few blocks, then click any transaction inside an old block to tamper with it. Watch what happens to the chain. Then repair it.</div>
-    </div>
-    <div class="panel">
-      <h3>The Chain <span class="chip b" id="chainStatus">VALID</span></h3>
-      <div class="chain" id="chain"></div>
+      <div class="swap-arrow">↓</div>
+      <div class="swap-in">
+        <input type="text" id="swapOut" placeholder="0.0" readonly style="color:var(--green)">
+        <div class="swap-token"><span class="tok-dot" style="background:#2775ca"></span>USDC</div>
+      </div>
+      <div class="quote">
+        <span id="quoteRate">Rate: —</span>
+        <span id="quoteImpact">Price impact: —</span>
+      </div>
+      <div class="impactbar"><i id="impactFill"></i></div>
       <div class="btnrow" style="margin-top:14px">
-        <button class="act" id="mineBtn">⛏ Mine a Block</button>
-        <button class="ghost" id="repairBtn" style="display:none">🔧 Repair Chain</button>
+        <button class="act" onclick="doSwap()">Swap</button>
+        <button class="ghost" onclick="resetPool()">Reset Pool</button>
       </div>
-      <div class="mine-log" id="mineLog"><div>Miner ready. Click "Mine a Block" to bundle pending transactions into a new block.</div></div>
-      <div class="note">Clicking a transaction inside a block simulates editing history (something no honest node would accept). Notice how the edited block <b>and every block after it</b> turn invalid — that's why blockchains are so hard to cheat.</div>
     </div>
-  </section>
-
-  <!-- ============ 04 DEFI ============ -->
-  <section class="module" id="m-defi">
-    <div class="concept">
-      <h2>DeFi replaces the middleman with a math pool</h2>
-      <p>A <b>liquidity pool</b> holds two tokens (here: ETH and USDC) deposited by users. Anyone can trade against the pool instantly — no bank, no exchange operator, no waiting for a buyer.</p>
-      <p>The pool follows a simple rule called the <b>constant product formula</b>: <span class="mono">x × y = k</span>. Every trade changes the ratio of tokens, which changes the price. Big trades move the price a lot — that's <b>price impact</b>, and it's why tiny pools give terrible rates.</p>
-      <div class="try"><b>Try it:</b> Swap ETH for USDC below. Start small, then try a huge amount and watch the price punish you.</div>
-    </div>
-    <div class="panel">
-      <h3>ETH / USDC Liquidity Pool</h3>
-      <div class="poolviz">
-        <div class="ethside" id="ethSide" style="width:50%">ETH</div>
-        <div class="usdcside" id="usdcSide" style="width:50%">USDC</div>
-      </div>
-      <div class="poolstats">
-        <span id="poolEth">Pool: 10.00 ETH</span>
-        <span id="poolPrice">Price: $3,000 / ETH</span>
-        <span id="poolUsdc">Pool: 30,000 USDC</span>
-      </div>
-      <div class="swapbox">
-        <div class="swap-in">
-          <input type="number" id="swapIn" placeholder="0.0" min="0" step="any">
-          <div class="swap-token"><span class="tok-dot" style="background:#627eea"></span>ETH</div>
-        </div>
-        <div class="swap-arrow">↓</div>
-        <div class="swap-in">
-          <input type="text" id="swapOut" placeholder="0.0" readonly style="color:var(--green)">
-          <div class="swap-token"><span class="tok-dot" style="background:#2775ca"></span>USDC</div>
-        </div>
-        <div class="quote">
-          <span id="quoteRate">Rate: —</span>
-          <span id="quoteImpact">Price impact: —</span>
-        </div>
-        <div class="impactbar"><i id="impactFill"></i></div>
-        <div class="btnrow" style="margin-top:14px">
-          <button class="act" id="doSwap">Swap</button>
-          <button class="ghost" id="resetPool">Reset Pool</button>
-        </div>
-      </div>
-      <div class="hist" id="swapHist"></div>
-    </div>
-  </section>
-
-  <footer>
-    Web3 Explorer — an interactive learning tool · Everything here is simulated · Not financial advice · Built for curious beginners
-  </footer>
+    <div class="hist" id="swapHist"></div>
+  </div>
+</section>
+<footer>Web3 Explorer — an interactive learning tool · Everything here is simulated · Not financial advice · Built for curious beginners</footer>
 </div>
-
 <script>
-/* ================= helpers ================= */
-const $ = id => document.getElementById(id);
-const randHex = n => [...crypto.getRandomValues(new Uint8Array(n))].map(b => b.toString(16).padStart(2,'0')).join('');
-const pick = a => a[Math.floor(Math.random()*a.length)];
-const short = h => h.slice(0,10)+'…'+h.slice(-6);
-const fmt = (n,d=2) => n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+"use strict";
+/* ---------- helpers ---------- */
+function byId(id){ return document.getElementById(id); }
+function randHex(n){
+  var bytes = new Uint8Array(n), i;
+  if (window.crypto && window.crypto.getRandomValues){ window.crypto.getRandomValues(bytes); }
+  else { for (i=0;i<n;i++){ bytes[i] = Math.floor(Math.random()*256); } }
+  var out = [];
+  for (i=0;i<n;i++){ out.push(('0'+bytes[i].toString(16)).slice(-2)); }
+  return out.join('');
+}
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function short(h){ return h.slice(0,10) + '…' + h.slice(-6); }
+function fmt(n,d){ if (d===undefined) d=2; return n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}); }
 
-/* ================= tabs ================= */
-document.querySelectorAll('.tab').forEach(t=>{
-  t.addEventListener('click',()=>{
-    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-    document.querySelectorAll('.module').forEach(x=>x.classList.remove('on'));
-    t.classList.add('active');
-    $('m-'+t.dataset.m).classList.add('on');
-    window.scrollTo({top:0,behavior:'smooth'});
-  });
-});
+/* ---------- tabs ---------- */
+function showTab(m, el){
+  var tabs = document.querySelectorAll('.tab');
+  var mods = document.querySelectorAll('.module');
+  var i;
+  for (i=0;i<tabs.length;i++){ tabs[i].classList.remove('active'); }
+  for (i=0;i<mods.length;i++){ mods[i].classList.remove('on'); }
+  el.classList.add('active');
+  byId('m-'+m).classList.add('on');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
 
-/* ================= 01 WALLET ================= */
-$('genWallet').addEventListener('click',()=>{
-  const addr = '0x'+randHex(20);
-  const key  = randHex(32);
-  $('walletOut').innerHTML = `
-    <div class="wallet-card flash">
-      <div class="wrow">
-        <div class="wlabel">Address 🔓</div>
-        <div class="wval" style="color:var(--green)">${addr}</div>
-      </div>
-      <div class="wrow">
-        <div class="wlabel">Private Key 🔐</div>
-        <div class="wval blur" id="pk" title="Click to reveal">••••••••••••••••••••••••••••••••••••••••••••••••••••••••••</div>
-      </div>
-      <div class="wrow">
-        <div class="wlabel">Balance</div>
-        <div class="wval" style="color:var(--dim)">0 ETH <span class="chip p">fresh wallet</span></div>
-      </div>
-    </div>`;
-  $('walletNote').style.display='block';
-  $('walletLegend').style.display='grid';
-  const pk = $('pk');
-  pk.dataset.real = key;
-  pk.addEventListener('click',()=>{
-    if(pk.classList.contains('blur')){
-      pk.classList.remove('blur');
-      pk.textContent = '0x'+pk.dataset.real;
-      pk.style.color='var(--red)';
-    }else{
-      pk.classList.add('blur');
-      pk.textContent='••••••••••••••••••••••••••••••••••••••••••••••••••••••••••';
-      pk.style.color='';
-    }
-  });
-});
+/* ---------- 01 WALLET ---------- */
+function genWallet(){
+  var addr = '0x' + randHex(20);
+  var key = randHex(32);
+  byId('walletOut').innerHTML =
+    '<div class="wallet-card">' +
+      '<div class="wrow"><div class="wlabel">🔓 Address</div><div class="wal" style="color:var(--green)">'+addr+'</div></div>' +
+      '<div class="wrow"><div class="wlabel">🔐 Private Key</div><div class="wal blur" id="pk" title="Tap to reveal" onclick="revealPk(this)">•••••••••••••••••••••••••••••••••••••••••</div></div>' +
+      '<div class="wrow"><div class="wlabel">Balance</div><div class="wal" style="color:var(--dim)">0 ETH <span class="chip p">fresh wallet</span></div></div>' +
+    '</div>';
+  byId('walletNote').style.display = 'block';
+  byId('walletLegend').style.display = 'grid';
+  byId('pk').setAttribute('data-real', key);
+}
+function revealPk(el){
+  if (el.classList.contains('blur')){
+    el.classList.remove('blur');
+    el.textContent = '0x' + el.getAttribute('data-real');
+    el.style.color = 'var(--red)';
+  } else {
+    el.classList.add('blur');
+    el.textContent = '•••••••••••••••••••••••••••••••••••••••••';
+    el.style.color = '';
+  }
+}
 
-/* ================= 02 GAS ================= */
-const TXNAMES = ['Swap 0.5 ETH → USDC','Transfer 2.1 ETH','Mint NFT #'+Math.floor(Math.random()*9000+1000),'Approve USDT spend','Transfer 120 USDC','Claim airdrop','Swap 1,500 DAI → ETH','Bridge to L2'];
-let myTx = null;
-
-function makeTx(isMine=false,fee=null){
-  return { name: isMine ? '⭐ YOUR transaction' : pick(TXNAMES), fee: fee ?? Math.floor(Math.random()*110)+5, mine:isMine };
+/* ---------- 02 GAS ---------- */
+var TXNAMES = ['Swap 0.5 ETH → USDC','Transfer 2.1 ETH','Mint NFT #4217','Approve USDT spend','Claim 0.8 ETH rewards','Bridge 3.0 ETH to L2'];
+var pool = [];
+var myTx = null;
+function makeTx(isMine, fee){
+  return { name: isMine ? '⭐ Your transaction' : pick(TXNAMES),
+           fee: (fee!==undefined && fee!==null) ? fee : Math.floor(Math.random()*110)+5,
+           isMine: !!isMine };
 }
 function renderMempool(){
-  $('mempool').innerHTML = pool.map((t,i)=>`
-    <div class="tx ${t.mine?'mine':''}" id="tx${i}">
-      <span>${t.name}</span>
-      <span class="fee">${t.fee} gwei</span>
-    </div>`).join('');
+  var html = '';
+  for (var i=0;i<pool.length;i++){
+    html += '<div class="tx' + (pool[i].isMine?' mine':'') + '" id="tx'+i+'">' +
+            '<span>'+pool[i].name+'</span><span class="fee">'+pool[i].fee+' gwei</span></div>';
+  }
+  byId('mempool').innerHTML = html;
 }
 function refillMempool(){
   pool = [];
-  for(let i=0;i<6;i++) pool.push(makeTx());
-  if(myTx) pool.push(myTx);
-  pool.sort(()=>Math.random()-.5);
+  var i;
+  for (i=0;i<6;i++){ pool.push(makeTx(false)); }
+  if (myTx){ pool.push(myTx); }
+  pool.sort(function(a,b){ return b.fee - a.fee; });
   renderMempool();
 }
-let pool = [];
-$('gweiSlider').addEventListener('input',e=>$('gweiOut').textContent=e.target.value+' gwei');
-
-$('sendTx').addEventListener('click',()=>{
-  if(myTx){ setGasNote('You already have a transaction waiting. Mine a block first!'); return; }
-  myTx = makeTx(true, +$('gweiSlider').value);
+function setGasNote(h){ byId('gasNote').innerHTML = h; }
+function sendTx(){
+  if (myTx){ setGasNote('You already have a transaction waiting. Mine a block first!'); return; }
+  myTx = makeTx(true, parseInt(byId('gweiSlider').value,10));
   pool.push(myTx);
   renderMempool();
-  setGasNote(`Your transaction entered the mempool offering <b>${myTx.fee} gwei</b>. Now mine a block to see if it gets picked.`);
-});
-
-$('mineBlockBtn').addEventListener('click',()=>{
-  const sorted=[...pool].sort((a,b)=>b.fee-a.fee);
-  const included = sorted.slice(0,5);
-  pool.forEach((t,i)=>{
-    const el=$('tx'+i);
-    if(!el) return;
-    if(included.includes(t)) el.classList.add('included');
-    else el.classList.add('skipped');
-  });
-  setTimeout(()=>{
-    const mineIn = myTx && included.includes(myTx);
-    if(myTx){
+  setGasNote('Your transaction entered the mempool offering <b>'+myTx.fee+' gwei</b>. Now mine a block to see if it gets picked.');
+}
+function mineBlock(){
+  var sorted = pool.slice().sort(function(a,b){ return b.fee - a.fee; });
+  var included = sorted.slice(0,5);
+  var i, el;
+  for (i=0;i<pool.length;i++){
+    el = byId('tx'+i);
+    if (!el){ continue; }
+    if (included.indexOf(pool[i]) !== -1){ el.classList.add('included'); }
+    else { el.classList.add('skipped'); }
+  }
+  setTimeout(function(){
+    var mineIn = myTx && included.indexOf(myTx) !== -1;
+    if (myTx){
       setGasNote(mineIn
-        ? `✅ <b>Confirmed!</b> Your ${myTx.fee} gwei fee was high enough — miners picked your transaction for the block.`
-        : `⏳ <b>Still pending.</b> Your ${myTx.fee} gwei fee lost to higher bidders. Raise the fee and try again — this is exactly what "gas wars" are.`);
-      myTx = mineIn ? null : myTx;
-      if(mineIn) myTx=null;
-    }else{
-      setGasNote(`Block mined. The 5 highest fees got in — everyone else keeps waiting. Fees are the language of priority.`);
+        ? '✅ <b>Confirmed!</b> Your '+myTx.fee+' gwei fee was high enough — miners picked your transaction for the block.'
+        : '⏳ <b>Still pending…</b> Your '+myTx.fee+' gwei fee lost to higher bidders. Raise the fee and try again — this is a gas war.');
+      if (mineIn){ myTx = null; }
+    } else {
+      setGasNote('Block mined. The 5 highest fees got in — everyone else keeps waiting. Fees are the language of priority.');
     }
     setTimeout(refillMempool, 1200);
-  },900);
-});
-function setGasNote(h){ $('gasNote').innerHTML=h; }
-refillMempool();
-
-/* ================= 03 BLOCKS ================= */
-let chain = [];
-let pendingTxs = [];
-let tampered = false;
-
-function txStr(){ return `${pick(['0x7f…','0xa3…','0xbe…','0x12…','0x9d…','0x44…'])} sent ${fmt(Math.random()*3,3)} ETH to ${pick(['0x8c…','0xe1…','0x6b…','0x0f…'])}`; }
-function hashOf(s){ let h=0; for(let i=0;i<s.length;i++){ h=((h<<5)-h+s.charCodeAt(i))|0; } return '0x'+Math.abs(h).toString(16).padStart(8,'0')+randHex(8); }
-
-function makeBlock(idx,txs,prevHash){
-  const base = idx+prevHash+txs.join('')+Date.now();
-  let nonce=0,h;
-  do{ nonce++; h=hashOf(base+nonce); }while(!h.startsWith('0x0000'));
-  return { idx, txs, prevHash, hash:h, nonce, time:new Date().toLocaleTimeString() };
+  }, 900);
 }
 
+/* ---------- 03 BLOCKS ---------- */
+var chain = [];
+var pendingTxs = [];
+var mining = false;
+function txStr(){
+  return pick(['0x7f…','0xa3…','0xbe…','0x12…','0x9d…','0x44…']) + ' sent ' + (Math.random()*3).toFixed(2) + ' ETH';
+}
+function hashOf(s){
+  var h = 0, i;
+  for (i=0;i<s.length;i++){ h = ((h<<5) - h + s.charCodeAt(i)) | 0; }
+  var hex = Math.abs(h).toString(16);
+  while (hex.length < 8){ hex = '0' + hex; }
+  return '0x' + hex;
+}
+function makeBlock(idx, txs, prevHash){
+  var base = idx + prevHash + txs.join(',') + Date.now();
+  var nonce = 0, h;
+  do { nonce++; h = hashOf(base + nonce); } while (h.indexOf('0x0000') !== 0);
+  return { idx: idx, txs: txs, prevHash: prevHash, hash: h, nonce: nonce,
+           time: new Date().toLocaleTimeString(), invalid: false };
+}
 function renderChain(){
-  $('chain').innerHTML = chain.map((b,i)=>`
-    ${i>0?'<div class="arrow">→</div>':''}
-    <div class="block ${b.invalid?'invalid':''}" id="block${b.idx}">
-      <div class="bhead"><span class="bidx">Block #${b.idx}</span><span class="chip ${b.invalid?'r':'g'}">${b.invalid?'INVALID':'mined'}</span></div>
-      <div class="bfield">hash <span class="bhash"><span>${short(b.hash)}</span></span></div>
-      <div class="bfield">previous <span>${short(b.prevHash)}</span></div>
-      <div class="bfield">nonce <span>${b.nonce.toLocaleString()}</span> · ${b.time}</div>
-      <div class="btx">${b.txs.map((t,j)=>`<span onclick="tamper(${b.idx},${j})" title="Click to tamper">${t}</span>`).join('')}</div>
-    </div>`).join('');
-  updateStatus();
+  var html = '', i, b, j, txsHtml;
+  for (i=0;i<chain.length;i++){
+    b = chain[i];
+    if (i>0){ html += '<div class="arrow">→</div>'; }
+    txsHtml = '';
+    for (j=0;j<b.txs.length;j++){
+      txsHtml += '<span onclick="tamper('+b.idx+','+j+')" title="Tap to tamper">'+b.txs[j]+'</span>';
+    }
+    html += '<div class="block'+(b.invalid?' invalid':'')+'" id="block'+b.idx+'">' +
+      '<div class="bhead"><span class="bidx">Block #'+b.idx+'</span>' +
+      '<span class="chip '+(b.invalid?'r':'g')+'">'+(b.invalid?'TAMPERED':'SEALED')+'</span></div>' +
+      '<div class="bfield">hash <span class="mono">'+short(b.hash)+'</span></div>' +
+      '<div class="bfield">prev <span class="mono">'+short(b.prevHash)+'</span></div>' +
+      '<div class="bfield">nonce <span class="mono">'+b.nonce+'</span> · '+b.time+'</div>' +
+      '<div class="btx">'+txsHtml+'</div></div>';
+  }
+  byId('chain').innerHTML = html;
+  updateChainStatus();
 }
-
-function updateStatus(){
-  const bad = chain.some(b=>b.invalid);
-  $('chainStatus').textContent = bad ? 'INVALID — history was tampered' : 'VALID';
-  $('chainStatus').className = 'chip '+(bad?'r':'b');
-  $('repairBtn').style.display = bad ? 'inline-block':'none';
+function updateChainStatus(){
+  var bad = false, i;
+  for (i=0;i<chain.length;i++){ if (chain[i].invalid){ bad = true; break; } }
+  byId('chainStatus').textContent = bad ? 'INVALID — history was tampered' : 'VALID';
+  byId('chainStatus').className = 'chip ' + (bad ? 'r' : 'b');
+  byId('repairBtn').style.display = bad ? 'inline-block' : 'none';
 }
-
-// genesis block
-(function(){
-  const g = makeBlock(0,[txStr(),txStr()],'0x'+'0'.repeat(40));
-  chain.push(g); renderChain();
-})();
-
-$('mineBtn').addEventListener('click',()=>{
-  const btn=$('mineBtn'); btn.disabled=true;
-  const log=$('mineLog');
-  const txs = pendingTxs.length? pendingTxs.splice(0) : [txStr(),txStr(),txStr()];
-  const prev = chain[chain.length-1];
-  const idx = prev.idx+1;
-  log.innerHTML='';
-  const msgs = [
-    `Picked up ${txs.length} pending transaction(s)…`,
-    `Hashing block #${idx} with target 0x0000…`,
-    `nonce: 1 … 4,203 … 17,881 …`,
-    `<span class="ok">Hash found! ${short('0x0000'+randHex(18))} — block #${idx} mined ✅</span>`
+function mineLogMsg(html){
+  var log = byId('mineLog');
+  log.innerHTML += '<div>'+html+'</div>';
+  log.scrollTop = log.scrollHeight;
+}
+function mineChainBlock(){
+  if (mining){ return; }
+  mining = true;
+  var log = byId('mineLog');
+  var txs = pendingTxs.length ? pendingTxs.splice(0) : [txStr(), txStr()];
+  var prev = chain[chain.length-1];
+  var idx = prev.idx + 1;
+  log.innerHTML = '';
+  var msgs = [
+    'Picked up '+txs.length+' pending transaction(s)…',
+    'Hashing block #'+idx+' with target 0x0000…',
+    'nonce 1 … 4,203 … 17,881 …',
+    '<span class="ok">✔ hash found — block #'+idx+' mined</span>'
   ];
-  msgs.forEach((m,i)=>setTimeout(()=>{ log.innerHTML+=`<div>${m}</div>`; log.scrollTop=log.scrollHeight; }, i*450));
-  setTimeout(()=>{
-    const nb = makeBlock(idx,txs,prev.hash);
-    chain.push(nb); renderChain(); btn.disabled=false;
-  }, msgs.length*450+200);
-});
-
-window.tamper = function(idx,j){
-  const b = chain.find(x=>x.idx===idx);
-  const log=$('mineLog');
-  b.txs[j] = b.txs[j].replace(/[\d.]+ ETH/,'9,999 ETH'); // absurd edit
-  log.innerHTML+=`<div style="color:var(--amber)">⚠️ Block #${idx} was edited! Re-checking hashes…</div>`; log.scrollTop=log.scrollHeight;
-  setTimeout(()=>{
-    // invalidate edited block + everything after it
-    chain.forEach((blk,k)=>{
-      const prevHash = k===0 ? '0x'+'0'.repeat(40) : chain[k-1].hash;
-      blk.invalid = (blk.idx>=idx);
-    });
+  var i;
+  for (i=0;i<msgs.length;i++){
+    (function(m, k){ setTimeout(function(){ mineLogMsg(m); }, k*450); })(msgs[i], i);
+  }
+  setTimeout(function(){
+    var nb = makeBlock(idx, txs, prev.hash);
+    chain.push(nb);
     renderChain();
-    log.innerHTML+=`<div style="color:var(--red)">✗ Block #${idx} hash changed → block #${idx+1&&chain[idx+1]?idx+1:''} no longer links → CHAIN INVALID. The network rejects this history.</div>`;
-    log.scrollTop=log.scrollHeight;
-  },700);
-};
-
-$('repairBtn').addEventListener('click',()=>{
-  chain.forEach(b=>b.invalid=false);
+    mining = false;
+  }, msgs.length*450 + 200);
+}
+function tamper(idx, j){
+  var b = null, i, k;
+  for (i=0;i<chain.length;i++){ if (chain[i].idx === idx){ b = chain[i]; break; } }
+  if (!b){ return; }
+  b.txs[j] = b.txs[j].replace(/[\d.]+ ETH/, '9,999 ETH');
+  mineLogMsg('⚠️ Block #'+idx+' was edited! Re-checking hashes…');
+  setTimeout(function(){
+    for (k=0;k<chain.length;k++){ chain[k].invalid = (chain[k].idx >= idx); }
+    renderChain();
+    mineLogMsg('✗ Block #'+idx+' hash changed — it and every block after it are now INVALID.');
+  }, 700);
+}
+function repairChain(){
+  var i;
+  for (i=0;i<chain.length;i++){ chain[i].invalid = false; }
   renderChain();
-  $('mineLog').innerHTML+='<div style="color:var(--green)">✓ Chain repaired (honest nodes re-mine to match the real history). Tampering is practically impossible — you\'d need to redo all the work and convince the whole network.</div>';
-  $('mineLog').scrollTop=$('mineLog').scrollHeight;
-});
+  mineLogMsg('<span class="ok">✔ Chain repaired (honest nodes re-mine to match the real history).</span>');
+}
 
-/* ================= 04 DEFI ================= */
-let poolEth=10, poolUsdc=30000;
-const K = () => poolEth*poolUsdc;
-
+/* ---------- 04 DEFI ---------- */
+var poolEth = 10;
+var poolUsdc = 30000;
+function K(){ return poolEth * poolUsdc; }
 function renderPool(){
-  const total=poolEth+poolUsdc/3000; // visual split by ETH value
-  const ethPct = Math.max(8,Math.min(92,(poolEth/(poolEth+poolUsdc/3000))*100));
-  $('ethSide').style.width = ethPct+'%';
-  $('usdcSide').style.width = (100-ethPct)+'%';
-  $('poolEth').textContent = `Pool: ${fmt(poolEth)} ETH`;
-  $('poolUsdc').textContent = `Pool: ${fmt(poolUsdc,0)} USDC`;
-  $('poolPrice').textContent = `Price: $${fmt(poolUsdc/poolEth,0)} / ETH`;
+  var ethPct = Math.max(8, Math.min(92, (poolEth / (poolEth + poolUsdc/3000)) * 100));
+  byId('ethSide').style.width = ethPct + '%';
+  byId('usdcSide').style.width = (100 - ethPct) + '%';
+  byId('poolEth').textContent = 'Pool: ' + fmt(poolEth) + ' ETH';
+  byId('poolUsdc').textContent = 'Pool: ' + fmt(poolUsdc, 0) + ' USDC';
+  byId('poolPrice').textContent = 'Price: $' + fmt(poolUsdc/poolEth, 0) + ' / ETH';
 }
-
 function quote(){
-  const amt = parseFloat($('swapIn').value)||0;
-  if(amt<=0){ $('swapOut').value=''; $('quoteRate').textContent='Rate: —'; $('quoteImpact').textContent='Price impact: —'; $('impactFill').style.width='0'; return; }
-  if(amt>=poolEth){ $('swapOut').value='exceeds pool'; return; }
-  const out = poolUsdc - K()/(poolEth+amt);
-  const outFee = out*0.997;
-  const spot = poolUsdc/poolEth;
-  const impact = (spot - outFee/amt)/spot*100;
-  $('swapOut').value = fmt(outFee);
-  $('quoteRate').textContent = `Rate: 1 ETH ≈ $${fmt(outFee/amt)} USDC`;
-  const impEl=$('quoteImpact');
-  impEl.textContent = `Price impact: ${fmt(impact,2)}%`;
-  impEl.className = impact>5 ? 'warn' : '';
-  const fill=$('impactFill');
-  fill.style.width = Math.min(100,impact*4)+'%';
-  fill.style.background = impact>5 ? 'var(--red)' : impact>1 ? 'var(--amber)' : 'var(--green)';
+  var amt = parseFloat(byId('swapIn').value) || 0;
+  var rateEl = byId('quoteRate'), impEl = byId('quoteImpact'), fill = byId('impactFill');
+  if (amt <= 0){
+    byId('swapOut').value = '';
+    rateEl.textContent = 'Rate: —';
+    impEl.textContent = 'Price impact: —';
+    impEl.className = '';
+    fill.style.width = '0%';
+    return;
+  }
+  if (amt >= poolEth){ byId('swapOut').value = 'exceeds pool'; return; }
+  var out = poolUsdc - K()/(poolEth + amt);
+  var outFee = out * 0.997;
+  var spot = poolUsdc / poolEth;
+  var impact = (spot - outFee/amt) / spot * 100;
+  byId('swapOut').value = fmt(outFee);
+  rateEl.textContent = 'Rate: 1 ETH ≈ ' + fmt(outFee/amt) + ' USDC';
+  impEl.textContent = 'Price impact: ' + fmt(impact) + '%';
+  impEl.className = (impact > 5) ? 'warn' : '';
+  fill.style.width = Math.min(100, impact*4) + '%';
+  fill.style.background = (impact > 5) ? 'var(--red)' : (impact > 1) ? 'var(--amber)' : 'var(--green)';
 }
-$('swapIn').addEventListener('input',quote);
-
-$('doSwap').addEventListener('click',()=>{
-  const amt = parseFloat($('swapIn').value)||0;
-  if(amt<=0||amt>=poolEth) return;
-  const out = poolUsdc - K()/(poolEth+amt);
-  const outFee = out*0.997;
-  poolEth += amt; poolUsdc -= outFee;
+function doSwap(){
+  var amt = parseFloat(byId('swapIn').value) || 0;
+  if (amt <= 0 || amt >= poolEth){ return; }
+  var out = poolUsdc - K()/(poolEth + amt);
+  var outFee = out * 0.997;
+  poolEth += amt;
+  poolUsdc -= outFee;
   renderPool();
-  const h=document.createElement('div');
-  h.innerHTML=`You swapped <b style="color:var(--txt)">${fmt(amt)} ETH</b> → <b style="color:var(--green)">${fmt(outFee,0)} USDC</b> · new price $${fmt(poolUsdc/poolEth,0)}`;
-  $('swapHist').prepend(h);
-  $('swapIn').value=''; quote();
-});
+  var h = document.createElement('div');
+  h.innerHTML = 'You swapped <b style="color:var(--txt)">'+fmt(amt)+' ETH</b> → <b style="color:var(--green)">'+fmt(outFee)+' USDC</b>';
+  var hist = byId('swapHist');
+  hist.insertBefore(h, hist.firstChild);
+  byId('swapIn').value = '';
+  quote();
+}
+function resetPool(){
+  poolEth = 10;
+  poolUsdc = 30000;
+  byId('swapHist').innerHTML = '';
+  byId('swapIn').value = '';
+  renderPool();
+  quote();
+}
 
-$('resetPool').addEventListener('click',()=>{ poolEth=10; poolUsdc=30000; $('swapHist').innerHTML=''; $('swapIn').value=''; renderPool(); quote(); });
-
+/* ---------- init ---------- */
+refillMempool();
+(function(){
+  var g = makeBlock(0, [txStr(), txStr()], '0x' + new Array(41).join('0'));
+  chain.push(g);
+  renderChain();
+})();
 renderPool();
+quote();
 </script>
 </body>
 </html>

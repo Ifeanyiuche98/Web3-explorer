@@ -97,13 +97,311 @@ input[type=range]{width:100%;accent-color:var(--green)}
 .impactbar i{display:block;height:100%;width:0;background:var(--green);transition:width .3s}
 .hist{margin-top:16px;display:flex;flex-direction:column;gap:6px}
 .hist div{font-size:12px;color:var(--dim);font-family:var(--mono);background:var(--bg2);border-radius:8px;padding:7px 10px;border:1px solid var(--line)}
+.jsbanner{display:block;background:var(--red-dim);border:1px solid var(--red);color:var(--red);border-radius:12px;padding:14px 16px;font-size:13px;margin-bottom:20px;line-height:1.5}
+.js .jsbanner{display:none}
+.engine{font-family:var(--mono);font-size:11px;color:var(--faint);margin:0 0 6px}
 footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px;text-align:center}
 </style>
+<script>
+document.documentElement.className += " js";
+"use strict";
+/* ---------- helpers ---------- */
+function byId(id){ return document.getElementById(id); }
+function randHex(n){
+  var bytes = new Uint8Array(n), i;
+  if (window.crypto && window.crypto.getRandomValues){ window.crypto.getRandomValues(bytes); }
+  else { for (i=0;i<n;i++){ bytes[i] = Math.floor(Math.random()*256); } }
+  var out = [];
+  for (i=0;i<n;i++){ out.push(('0'+bytes[i].toString(16)).slice(-2)); }
+  return out.join('');
+}
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function short(h){ return h.slice(0,10) + '…' + h.slice(-6); }
+function fmt(n,d){ if (d===undefined) d=2; return n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+
+/* ---------- tabs ---------- */
+function showTab(m, el){
+  var tabs = document.querySelectorAll('.tab');
+  var mods = document.querySelectorAll('.module');
+  var i;
+  for (i=0;i<tabs.length;i++){ tabs[i].classList.remove('active'); }
+  for (i=0;i<mods.length;i++){ mods[i].classList.remove('on'); }
+  el.classList.add('active');
+  byId('m-'+m).classList.add('on');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ---------- 01 WALLET ---------- */
+function genWallet(){
+  var addr = '0x' + randHex(20);
+  var key = randHex(32);
+  byId('walletOut').innerHTML =
+    '<div class="wallet-card">' +
+      '<div class="wrow"><div class="wlabel">🔓 Address</div><div class="wal" style="color:var(--green)">'+addr+'</div></div>' +
+      '<div class="wrow"><div class="wlabel">🔐 Private Key</div><div class="wal blur" id="pk" title="Tap to reveal" onclick="revealPk(this)">•••••••••••••••••••••••••••••••••••••••••</div></div>' +
+      '<div class="wrow"><div class="wlabel">Balance</div><div class="wal" style="color:var(--dim)">0 ETH <span class="chip p">fresh wallet</span></div></div>' +
+    '</div>';
+  byId('walletNote').style.display = 'block';
+  byId('walletLegend').style.display = 'grid';
+  byId('pk').setAttribute('data-real', key);
+}
+function revealPk(el){
+  if (el.classList.contains('blur')){
+    el.classList.remove('blur');
+    el.textContent = '0x' + el.getAttribute('data-real');
+    el.style.color = 'var(--red)';
+  } else {
+    el.classList.add('blur');
+    el.textContent = '•••••••••••••••••••••••••••••••••••••••••';
+    el.style.color = '';
+  }
+}
+
+/* ---------- 02 GAS ---------- */
+var TXNAMES = ['Swap 0.5 ETH → USDC','Transfer 2.1 ETH','Mint NFT #4217','Approve USDT spend','Claim 0.8 ETH rewards','Bridge 3.0 ETH to L2'];
+var pool = [];
+var myTx = null;
+function makeTx(isMine, fee){
+  return { name: isMine ? '⭐ Your transaction' : pick(TXNAMES),
+           fee: (fee!==undefined && fee!==null) ? fee : Math.floor(Math.random()*110)+5,
+           isMine: !!isMine };
+}
+function renderMempool(){
+  var mp = byId('mempool'); if(!mp){ return; }
+  var html = '';
+  for (var i=0;i<pool.length;i++){
+    html += '<div class="tx' + (pool[i].isMine?' mine':'') + '" id="tx'+i+'">' +
+            '<span>'+pool[i].name+'</span><span class="fee">'+pool[i].fee+' gwei</span></div>';
+  }
+  mp.innerHTML = html;
+}
+function refillMempool(){
+  pool = [];
+  var i;
+  for (i=0;i<6;i++){ pool.push(makeTx(false)); }
+  if (myTx){ pool.push(myTx); }
+  pool.sort(function(a,b){ return b.fee - a.fee; });
+  renderMempool();
+}
+function setGasNote(h){ byId('gasNote').innerHTML = h; }
+function sendTx(){
+  if (myTx){ setGasNote('You already have a transaction waiting. Mine a block first!'); return; }
+  myTx = makeTx(true, parseInt(byId('gweiSlider').value,10));
+  pool.push(myTx);
+  renderMempool();
+  setGasNote('Your transaction entered the mempool offering <b>'+myTx.fee+' gwei</b>. Now mine a block to see if it gets picked.');
+}
+function mineBlock(){
+  var sorted = pool.slice().sort(function(a,b){ return b.fee - a.fee; });
+  var included = sorted.slice(0,5);
+  var i, el;
+  for (i=0;i<pool.length;i++){
+    el = byId('tx'+i);
+    if (!el){ continue; }
+    if (included.indexOf(pool[i]) !== -1){ el.classList.add('included'); }
+    else { el.classList.add('skipped'); }
+  }
+  setTimeout(function(){
+    var mineIn = myTx && included.indexOf(myTx) !== -1;
+    if (myTx){
+      setGasNote(mineIn
+        ? '✅ <b>Confirmed!</b> Your '+myTx.fee+' gwei fee was high enough — miners picked your transaction for the block.'
+        : '⏳ <b>Still pending…</b> Your '+myTx.fee+' gwei fee lost to higher bidders. Raise the fee and try again — this is a gas war.');
+      if (mineIn){ myTx = null; }
+    } else {
+      setGasNote('Block mined. The 5 highest fees got in — everyone else keeps waiting. Fees are the language of priority.');
+    }
+    setTimeout(refillMempool, 1200);
+  }, 900);
+}
+
+/* ---------- 03 BLOCKS ---------- */
+var chain = [];
+var pendingTxs = [];
+var mining = false;
+function txStr(){
+  return pick(['0x7f…','0xa3…','0xbe…','0x12…','0x9d…','0x44…']) + ' sent ' + (Math.random()*3).toFixed(2) + ' ETH';
+}
+function hashOf(s){
+  var h = 0, i;
+  for (i=0;i<s.length;i++){ h = ((h<<5) - h + s.charCodeAt(i)) | 0; }
+  var hex = Math.abs(h).toString(16);
+  while (hex.length < 8){ hex = '0' + hex; }
+  return '0x' + hex;
+}
+function makeBlock(idx, txs, prevHash){
+  var base = idx + prevHash + txs.join(',') + Date.now();
+  var nonce = 0, h;
+  do { nonce++; h = hashOf(base + nonce); } while (h.indexOf('0x0000') !== 0);
+  return { idx: idx, txs: txs, prevHash: prevHash, hash: h, nonce: nonce,
+           time: new Date().toLocaleTimeString(), invalid: false };
+}
+function renderChain(){
+  var ch = byId('chain'); if(!ch){ return; }
+  var html = '', i, b, j, txsHtml;
+  for (i=0;i<chain.length;i++){
+    b = chain[i];
+    if (i>0){ html += '<div class="arrow">→</div>'; }
+    txsHtml = '';
+    for (j=0;j<b.txs.length;j++){
+      txsHtml += '<span onclick="tamper('+b.idx+','+j+')" title="Tap to tamper">'+b.txs[j]+'</span>';
+    }
+    html += '<div class="block'+(b.invalid?' invalid':'')+'" id="block'+b.idx+'">' +
+      '<div class="bhead"><span class="bidx">Block #'+b.idx+'</span>' +
+      '<span class="chip '+(b.invalid?'r':'g')+'">'+(b.invalid?'TAMPERED':'SEALED')+'</span></div>' +
+      '<div class="bfield">hash <span class="mono">'+short(b.hash)+'</span></div>' +
+      '<div class="bfield">prev <span class="mono">'+short(b.prevHash)+'</span></div>' +
+      '<div class="bfield">nonce <span class="mono">'+b.nonce+'</span> · '+b.time+'</div>' +
+      '<div class="btx">'+txsHtml+'</div></div>';
+  }
+  ch.innerHTML = html;
+  updateChainStatus();
+}
+function updateChainStatus(){
+  var bad = false, i;
+  for (i=0;i<chain.length;i++){ if (chain[i].invalid){ bad = true; break; } }
+  byId('chainStatus').textContent = bad ? 'INVALID — history was tampered' : 'VALID';
+  byId('chainStatus').className = 'chip ' + (bad ? 'r' : 'b');
+  byId('repairBtn').style.display = bad ? 'inline-block' : 'none';
+}
+function mineLogMsg(html){
+  var log = byId('mineLog');
+  log.innerHTML += '<div>'+html+'</div>';
+  log.scrollTop = log.scrollHeight;
+}
+function mineChainBlock(){
+  if (mining){ return; }
+  mining = true;
+  var log = byId('mineLog');
+  var txs = pendingTxs.length ? pendingTxs.splice(0) : [txStr(), txStr()];
+  var prev = chain[chain.length-1];
+  var idx = prev.idx + 1;
+  log.innerHTML = '';
+  var msgs = [
+    'Picked up '+txs.length+' pending transaction(s)…',
+    'Hashing block #'+idx+' with target 0x0000…',
+    'nonce 1 … 4,203 … 17,881 …',
+    '<span class="ok">✔ hash found — block #'+idx+' mined</span>'
+  ];
+  var i;
+  for (i=0;i<msgs.length;i++){
+    (function(m, k){ setTimeout(function(){ mineLogMsg(m); }, k*450); })(msgs[i], i);
+  }
+  setTimeout(function(){
+    var nb = makeBlock(idx, txs, prev.hash);
+    chain.push(nb);
+    renderChain();
+    mining = false;
+  }, msgs.length*450 + 200);
+}
+function tamper(idx, j){
+  var b = null, i, k;
+  for (i=0;i<chain.length;i++){ if (chain[i].idx === idx){ b = chain[i]; break; } }
+  if (!b){ return; }
+  b.txs[j] = b.txs[j].replace(/[\d.]+ ETH/, '9,999 ETH');
+  mineLogMsg('⚠️ Block #'+idx+' was edited! Re-checking hashes…');
+  setTimeout(function(){
+    for (k=0;k<chain.length;k++){ chain[k].invalid = (chain[k].idx >= idx); }
+    renderChain();
+    mineLogMsg('✗ Block #'+idx+' hash changed — it and every block after it are now INVALID.');
+  }, 700);
+}
+function repairChain(){
+  var i;
+  for (i=0;i<chain.length;i++){ chain[i].invalid = false; }
+  renderChain();
+  mineLogMsg('<span class="ok">✔ Chain repaired (honest nodes re-mine to match the real history).</span>');
+}
+
+/* ---------- 04 DEFI ---------- */
+var poolEth = 10;
+var poolUsdc = 30000;
+function K(){ return poolEth * poolUsdc; }
+function renderPool(){
+  if(!byId('ethSide')){ return; }
+  var ethPct = Math.max(8, Math.min(92, (poolEth / (poolEth + poolUsdc/3000)) * 100));
+  byId('ethSide').style.width = ethPct + '%';
+  byId('usdcSide').style.width = (100 - ethPct) + '%';
+  byId('poolEth').textContent = 'Pool: ' + fmt(poolEth) + ' ETH';
+  byId('poolUsdc').textContent = 'Pool: ' + fmt(poolUsdc, 0) + ' USDC';
+  byId('poolPrice').textContent = 'Price: $' + fmt(poolUsdc/poolEth, 0) + ' / ETH';
+}
+function quote(){
+  var amt = parseFloat(byId('swapIn').value) || 0;
+  var rateEl = byId('quoteRate'), impEl = byId('quoteImpact'), fill = byId('impactFill');
+  if (amt <= 0){
+    byId('swapOut').value = '';
+    rateEl.textContent = 'Rate: —';
+    impEl.textContent = 'Price impact: —';
+    impEl.className = '';
+    fill.style.width = '0%';
+    return;
+  }
+  if (amt >= poolEth){ byId('swapOut').value = 'exceeds pool'; return; }
+  var out = poolUsdc - K()/(poolEth + amt);
+  var outFee = out * 0.997;
+  var spot = poolUsdc / poolEth;
+  var impact = (spot - outFee/amt) / spot * 100;
+  byId('swapOut').value = fmt(outFee);
+  rateEl.textContent = 'Rate: 1 ETH ≈ ' + fmt(outFee/amt) + ' USDC';
+  impEl.textContent = 'Price impact: ' + fmt(impact) + '%';
+  impEl.className = (impact > 5) ? 'warn' : '';
+  fill.style.width = Math.min(100, impact*4) + '%';
+  fill.style.background = (impact > 5) ? 'var(--red)' : (impact > 1) ? 'var(--amber)' : 'var(--green)';
+}
+function doSwap(){
+  var amt = parseFloat(byId('swapIn').value) || 0;
+  if (amt <= 0 || amt >= poolEth){ return; }
+  var out = poolUsdc - K()/(poolEth + amt);
+  var outFee = out * 0.997;
+  poolEth += amt;
+  poolUsdc -= outFee;
+  renderPool();
+  var h = document.createElement('div');
+  h.innerHTML = 'You swapped <b style="color:var(--txt)">'+fmt(amt)+' ETH</b> → <b style="color:var(--green)">'+fmt(outFee)+' USDC</b>';
+  var hist = byId('swapHist');
+  hist.insertBefore(h, hist.firstChild);
+  byId('swapIn').value = '';
+  quote();
+}
+function resetPool(){
+  poolEth = 10;
+  poolUsdc = 30000;
+  byId('swapHist').innerHTML = '';
+  byId('swapIn').value = '';
+  renderPool();
+  quote();
+}
+
+/* ---------- resilient boot: runs the moment the needed elements exist ---------- */
+window._booted = false;
+function boot(){
+  if (window._booted){ return; }
+  if (!document.getElementById('mempool')){ return; }
+  window._booted = true;
+  try { refillMempool(); } catch(e){}
+  try {
+    var g = makeBlock(0, [txStr(), txStr()], '0x' + new Array(41).join('0'));
+    chain.push(g);
+    renderChain();
+  } catch(e){}
+  try { renderPool(); } catch(e){}
+  try { quote(); } catch(e){}
+  var st = document.getElementById('engineStatus');
+  if (st){ st.textContent = 'engine: ready ✔'; st.style.color = 'var(--green)'; }
+}
+if (document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', boot);
+} else { boot(); }
+setInterval(boot, 400);
+</script>
 </head>
 <body>
 <div class="wrap">
+<div class="jsbanner">⚠️ <b>JavaScript is disabled or blocked on this browser.</b> The lessons will show, but nothing interactive will work. Enable JavaScript in your browser settings, or try another browser.</div>
 <header>
   <div class="logo"><div class="logo-mark">⛓️</div><h1>Web3 Explorer</h1></div>
+  <p class="engine" id="engineStatus">engine: loading…</p>
   <p class="tag">Don't just read about blockchain — touch it. Four interactive playgrounds that explain the core concepts behind every crypto app. No wallet, no signup, no risk.</p>
 </header>
 <nav class="tabs">
@@ -216,282 +514,5 @@ footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);color:v
 </section>
 <footer>Web3 Explorer — an interactive learning tool · Everything here is simulated · Not financial advice · Built for curious beginners</footer>
 </div>
-<script>
-"use strict";
-/* ---------- helpers ---------- */
-function byId(id){ return document.getElementById(id); }
-function randHex(n){
-  var bytes = new Uint8Array(n), i;
-  if (window.crypto && window.crypto.getRandomValues){ window.crypto.getRandomValues(bytes); }
-  else { for (i=0;i<n;i++){ bytes[i] = Math.floor(Math.random()*256); } }
-  var out = [];
-  for (i=0;i<n;i++){ out.push(('0'+bytes[i].toString(16)).slice(-2)); }
-  return out.join('');
-}
-function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
-function short(h){ return h.slice(0,10) + '…' + h.slice(-6); }
-function fmt(n,d){ if (d===undefined) d=2; return n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}); }
-
-/* ---------- tabs ---------- */
-function showTab(m, el){
-  var tabs = document.querySelectorAll('.tab');
-  var mods = document.querySelectorAll('.module');
-  var i;
-  for (i=0;i<tabs.length;i++){ tabs[i].classList.remove('active'); }
-  for (i=0;i<mods.length;i++){ mods[i].classList.remove('on'); }
-  el.classList.add('active');
-  byId('m-'+m).classList.add('on');
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-/* ---------- 01 WALLET ---------- */
-function genWallet(){
-  var addr = '0x' + randHex(20);
-  var key = randHex(32);
-  byId('walletOut').innerHTML =
-    '<div class="wallet-card">' +
-      '<div class="wrow"><div class="wlabel">🔓 Address</div><div class="wal" style="color:var(--green)">'+addr+'</div></div>' +
-      '<div class="wrow"><div class="wlabel">🔐 Private Key</div><div class="wal blur" id="pk" title="Tap to reveal" onclick="revealPk(this)">•••••••••••••••••••••••••••••••••••••••••</div></div>' +
-      '<div class="wrow"><div class="wlabel">Balance</div><div class="wal" style="color:var(--dim)">0 ETH <span class="chip p">fresh wallet</span></div></div>' +
-    '</div>';
-  byId('walletNote').style.display = 'block';
-  byId('walletLegend').style.display = 'grid';
-  byId('pk').setAttribute('data-real', key);
-}
-function revealPk(el){
-  if (el.classList.contains('blur')){
-    el.classList.remove('blur');
-    el.textContent = '0x' + el.getAttribute('data-real');
-    el.style.color = 'var(--red)';
-  } else {
-    el.classList.add('blur');
-    el.textContent = '•••••••••••••••••••••••••••••••••••••••••';
-    el.style.color = '';
-  }
-}
-
-/* ---------- 02 GAS ---------- */
-var TXNAMES = ['Swap 0.5 ETH → USDC','Transfer 2.1 ETH','Mint NFT #4217','Approve USDT spend','Claim 0.8 ETH rewards','Bridge 3.0 ETH to L2'];
-var pool = [];
-var myTx = null;
-function makeTx(isMine, fee){
-  return { name: isMine ? '⭐ Your transaction' : pick(TXNAMES),
-           fee: (fee!==undefined && fee!==null) ? fee : Math.floor(Math.random()*110)+5,
-           isMine: !!isMine };
-}
-function renderMempool(){
-  var html = '';
-  for (var i=0;i<pool.length;i++){
-    html += '<div class="tx' + (pool[i].isMine?' mine':'') + '" id="tx'+i+'">' +
-            '<span>'+pool[i].name+'</span><span class="fee">'+pool[i].fee+' gwei</span></div>';
-  }
-  byId('mempool').innerHTML = html;
-}
-function refillMempool(){
-  pool = [];
-  var i;
-  for (i=0;i<6;i++){ pool.push(makeTx(false)); }
-  if (myTx){ pool.push(myTx); }
-  pool.sort(function(a,b){ return b.fee - a.fee; });
-  renderMempool();
-}
-function setGasNote(h){ byId('gasNote').innerHTML = h; }
-function sendTx(){
-  if (myTx){ setGasNote('You already have a transaction waiting. Mine a block first!'); return; }
-  myTx = makeTx(true, parseInt(byId('gweiSlider').value,10));
-  pool.push(myTx);
-  renderMempool();
-  setGasNote('Your transaction entered the mempool offering <b>'+myTx.fee+' gwei</b>. Now mine a block to see if it gets picked.');
-}
-function mineBlock(){
-  var sorted = pool.slice().sort(function(a,b){ return b.fee - a.fee; });
-  var included = sorted.slice(0,5);
-  var i, el;
-  for (i=0;i<pool.length;i++){
-    el = byId('tx'+i);
-    if (!el){ continue; }
-    if (included.indexOf(pool[i]) !== -1){ el.classList.add('included'); }
-    else { el.classList.add('skipped'); }
-  }
-  setTimeout(function(){
-    var mineIn = myTx && included.indexOf(myTx) !== -1;
-    if (myTx){
-      setGasNote(mineIn
-        ? '✅ <b>Confirmed!</b> Your '+myTx.fee+' gwei fee was high enough — miners picked your transaction for the block.'
-        : '⏳ <b>Still pending…</b> Your '+myTx.fee+' gwei fee lost to higher bidders. Raise the fee and try again — this is a gas war.');
-      if (mineIn){ myTx = null; }
-    } else {
-      setGasNote('Block mined. The 5 highest fees got in — everyone else keeps waiting. Fees are the language of priority.');
-    }
-    setTimeout(refillMempool, 1200);
-  }, 900);
-}
-
-/* ---------- 03 BLOCKS ---------- */
-var chain = [];
-var pendingTxs = [];
-var mining = false;
-function txStr(){
-  return pick(['0x7f…','0xa3…','0xbe…','0x12…','0x9d…','0x44…']) + ' sent ' + (Math.random()*3).toFixed(2) + ' ETH';
-}
-function hashOf(s){
-  var h = 0, i;
-  for (i=0;i<s.length;i++){ h = ((h<<5) - h + s.charCodeAt(i)) | 0; }
-  var hex = Math.abs(h).toString(16);
-  while (hex.length < 8){ hex = '0' + hex; }
-  return '0x' + hex;
-}
-function makeBlock(idx, txs, prevHash){
-  var base = idx + prevHash + txs.join(',') + Date.now();
-  var nonce = 0, h;
-  do { nonce++; h = hashOf(base + nonce); } while (h.indexOf('0x0000') !== 0);
-  return { idx: idx, txs: txs, prevHash: prevHash, hash: h, nonce: nonce,
-           time: new Date().toLocaleTimeString(), invalid: false };
-}
-function renderChain(){
-  var html = '', i, b, j, txsHtml;
-  for (i=0;i<chain.length;i++){
-    b = chain[i];
-    if (i>0){ html += '<div class="arrow">→</div>'; }
-    txsHtml = '';
-    for (j=0;j<b.txs.length;j++){
-      txsHtml += '<span onclick="tamper('+b.idx+','+j+')" title="Tap to tamper">'+b.txs[j]+'</span>';
-    }
-    html += '<div class="block'+(b.invalid?' invalid':'')+'" id="block'+b.idx+'">' +
-      '<div class="bhead"><span class="bidx">Block #'+b.idx+'</span>' +
-      '<span class="chip '+(b.invalid?'r':'g')+'">'+(b.invalid?'TAMPERED':'SEALED')+'</span></div>' +
-      '<div class="bfield">hash <span class="mono">'+short(b.hash)+'</span></div>' +
-      '<div class="bfield">prev <span class="mono">'+short(b.prevHash)+'</span></div>' +
-      '<div class="bfield">nonce <span class="mono">'+b.nonce+'</span> · '+b.time+'</div>' +
-      '<div class="btx">'+txsHtml+'</div></div>';
-  }
-  byId('chain').innerHTML = html;
-  updateChainStatus();
-}
-function updateChainStatus(){
-  var bad = false, i;
-  for (i=0;i<chain.length;i++){ if (chain[i].invalid){ bad = true; break; } }
-  byId('chainStatus').textContent = bad ? 'INVALID — history was tampered' : 'VALID';
-  byId('chainStatus').className = 'chip ' + (bad ? 'r' : 'b');
-  byId('repairBtn').style.display = bad ? 'inline-block' : 'none';
-}
-function mineLogMsg(html){
-  var log = byId('mineLog');
-  log.innerHTML += '<div>'+html+'</div>';
-  log.scrollTop = log.scrollHeight;
-}
-function mineChainBlock(){
-  if (mining){ return; }
-  mining = true;
-  var log = byId('mineLog');
-  var txs = pendingTxs.length ? pendingTxs.splice(0) : [txStr(), txStr()];
-  var prev = chain[chain.length-1];
-  var idx = prev.idx + 1;
-  log.innerHTML = '';
-  var msgs = [
-    'Picked up '+txs.length+' pending transaction(s)…',
-    'Hashing block #'+idx+' with target 0x0000…',
-    'nonce 1 … 4,203 … 17,881 …',
-    '<span class="ok">✔ hash found — block #'+idx+' mined</span>'
-  ];
-  var i;
-  for (i=0;i<msgs.length;i++){
-    (function(m, k){ setTimeout(function(){ mineLogMsg(m); }, k*450); })(msgs[i], i);
-  }
-  setTimeout(function(){
-    var nb = makeBlock(idx, txs, prev.hash);
-    chain.push(nb);
-    renderChain();
-    mining = false;
-  }, msgs.length*450 + 200);
-}
-function tamper(idx, j){
-  var b = null, i, k;
-  for (i=0;i<chain.length;i++){ if (chain[i].idx === idx){ b = chain[i]; break; } }
-  if (!b){ return; }
-  b.txs[j] = b.txs[j].replace(/[\d.]+ ETH/, '9,999 ETH');
-  mineLogMsg('⚠️ Block #'+idx+' was edited! Re-checking hashes…');
-  setTimeout(function(){
-    for (k=0;k<chain.length;k++){ chain[k].invalid = (chain[k].idx >= idx); }
-    renderChain();
-    mineLogMsg('✗ Block #'+idx+' hash changed — it and every block after it are now INVALID.');
-  }, 700);
-}
-function repairChain(){
-  var i;
-  for (i=0;i<chain.length;i++){ chain[i].invalid = false; }
-  renderChain();
-  mineLogMsg('<span class="ok">✔ Chain repaired (honest nodes re-mine to match the real history).</span>');
-}
-
-/* ---------- 04 DEFI ---------- */
-var poolEth = 10;
-var poolUsdc = 30000;
-function K(){ return poolEth * poolUsdc; }
-function renderPool(){
-  var ethPct = Math.max(8, Math.min(92, (poolEth / (poolEth + poolUsdc/3000)) * 100));
-  byId('ethSide').style.width = ethPct + '%';
-  byId('usdcSide').style.width = (100 - ethPct) + '%';
-  byId('poolEth').textContent = 'Pool: ' + fmt(poolEth) + ' ETH';
-  byId('poolUsdc').textContent = 'Pool: ' + fmt(poolUsdc, 0) + ' USDC';
-  byId('poolPrice').textContent = 'Price: $' + fmt(poolUsdc/poolEth, 0) + ' / ETH';
-}
-function quote(){
-  var amt = parseFloat(byId('swapIn').value) || 0;
-  var rateEl = byId('quoteRate'), impEl = byId('quoteImpact'), fill = byId('impactFill');
-  if (amt <= 0){
-    byId('swapOut').value = '';
-    rateEl.textContent = 'Rate: —';
-    impEl.textContent = 'Price impact: —';
-    impEl.className = '';
-    fill.style.width = '0%';
-    return;
-  }
-  if (amt >= poolEth){ byId('swapOut').value = 'exceeds pool'; return; }
-  var out = poolUsdc - K()/(poolEth + amt);
-  var outFee = out * 0.997;
-  var spot = poolUsdc / poolEth;
-  var impact = (spot - outFee/amt) / spot * 100;
-  byId('swapOut').value = fmt(outFee);
-  rateEl.textContent = 'Rate: 1 ETH ≈ ' + fmt(outFee/amt) + ' USDC';
-  impEl.textContent = 'Price impact: ' + fmt(impact) + '%';
-  impEl.className = (impact > 5) ? 'warn' : '';
-  fill.style.width = Math.min(100, impact*4) + '%';
-  fill.style.background = (impact > 5) ? 'var(--red)' : (impact > 1) ? 'var(--amber)' : 'var(--green)';
-}
-function doSwap(){
-  var amt = parseFloat(byId('swapIn').value) || 0;
-  if (amt <= 0 || amt >= poolEth){ return; }
-  var out = poolUsdc - K()/(poolEth + amt);
-  var outFee = out * 0.997;
-  poolEth += amt;
-  poolUsdc -= outFee;
-  renderPool();
-  var h = document.createElement('div');
-  h.innerHTML = 'You swapped <b style="color:var(--txt)">'+fmt(amt)+' ETH</b> → <b style="color:var(--green)">'+fmt(outFee)+' USDC</b>';
-  var hist = byId('swapHist');
-  hist.insertBefore(h, hist.firstChild);
-  byId('swapIn').value = '';
-  quote();
-}
-function resetPool(){
-  poolEth = 10;
-  poolUsdc = 30000;
-  byId('swapHist').innerHTML = '';
-  byId('swapIn').value = '';
-  renderPool();
-  quote();
-}
-
-/* ---------- init ---------- */
-refillMempool();
-(function(){
-  var g = makeBlock(0, [txStr(), txStr()], '0x' + new Array(41).join('0'));
-  chain.push(g);
-  renderChain();
-})();
-renderPool();
-quote();
-</script>
 </body>
 </html>
